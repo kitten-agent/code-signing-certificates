@@ -120,6 +120,18 @@ describe('RSA keys and PEM boundaries', () => {
     expect(spki(result.publicKeyPEM)).toEqual(spki(publicKeyPEM));
   });
 
+  it('accepts single-line key PEMs with spaces in place of line breaks', () => {
+    const singleLine = (pem: string) => pem.trim().replace(/\n/g, ' ');
+    const result = convertKeyPairToPEM(
+      convertKeyPairPEMToKeyPair({
+        privateKeyPEM: singleLine(privateKeyPEM),
+        publicKeyPEM: singleLine(publicKeyPEM),
+      })
+    );
+    expect(spki(result.privateKeyPEM)).toEqual(spki(privateKeyPEM));
+    expect(spki(result.publicKeyPEM)).toEqual(spki(publicKeyPEM));
+  });
+
   it('converts a mismatched pair without prematurely validating it', () => {
     const result = convertKeyPairPEMToKeyPair({ privateKeyPEM: otherPrivateKeyPEM, publicKeyPEM });
     expect(() => validateSelfSignedCertificate(certificateFixture(), result)).toThrow(

@@ -23,7 +23,7 @@ function requireKeyPair(keyPair: RSAKeyPair): void {
 
 function normalizeKeyPEM(pem: string): string {
   return pem
-    .split(/\r\n|\r|\n/)
+    .split(/\r\n|\r|\n|(?<=-----)\s+|\s+(?=-----)/)
     .map((line) => line.trim())
     .join('\n');
 }
