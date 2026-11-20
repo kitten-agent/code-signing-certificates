@@ -104,33 +104,32 @@ describe('RSA keys and PEM boundaries', () => {
     expect(spki(result.publicKeyPEM)).toEqual(spki(publicKeyPEM));
   });
 
-  it('accepts indented key PEMs used by existing Expo consumers', () => {
-    const indent = (pem: string) =>
-      pem
-        .split('\n')
-        .map((line) => `  ${line}  `)
-        .join('\r\n');
-    const result = convertKeyPairToPEM(
-      convertKeyPairPEMToKeyPair({
-        privateKeyPEM: indent(privateKeyPEM),
-        publicKeyPEM: indent(publicKeyPEM),
-      })
-    );
-    expect(spki(result.privateKeyPEM)).toEqual(spki(privateKeyPEM));
-    expect(spki(result.publicKeyPEM)).toEqual(spki(publicKeyPEM));
-  });
-
-  it('accepts single-line key PEMs with spaces in place of line breaks', () => {
-    const singleLine = (pem: string) => pem.trim().replace(/\n/g, ' ');
-    const result = convertKeyPairToPEM(
-      convertKeyPairPEMToKeyPair({
-        privateKeyPEM: singleLine(privateKeyPEM),
-        publicKeyPEM: singleLine(publicKeyPEM),
-      })
-    );
-    expect(spki(result.privateKeyPEM)).toEqual(spki(privateKeyPEM));
-    expect(spki(result.publicKeyPEM)).toEqual(spki(publicKeyPEM));
-  });
+  test.each(['\n', '\r\n', '\r', ' ', '\t'])(
+    'accepts key PEMs separated by %p across indentation and key formats',
+    (separator) => {
+      for (const [key, type, parse] of [
+        [keyPair.privateKey, 'pkcs1', convertPrivateKeyPEMToPrivateKey],
+        [keyPair.privateKey, 'pkcs8', convertPrivateKeyPEMToPrivateKey],
+        [keyPair.publicKey, 'pkcs1', convertPublicKeyPEMToPublicKey],
+        [keyPair.publicKey, 'spki', convertPublicKeyPEMToPublicKey],
+      ] as const) {
+        const pem = key.export({ type, format: 'pem' }).toString();
+        for (const leading of ['', '  ', '\t']) {
+          for (const trailing of ['', '  ', '\t']) {
+            for (const finalSeparator of ['', separator]) {
+              const input =
+                pem
+                  .trim()
+                  .split('\n')
+                  .map((line) => `${leading}${line}${trailing}`)
+                  .join(separator) + finalSeparator;
+              expect(parse(input).equals(key)).toBe(true);
+            }
+          }
+        }
+      }
+    }
+  );
 
   it('converts a mismatched pair without prematurely validating it', () => {
     const result = convertKeyPairPEMToKeyPair({ privateKeyPEM: otherPrivateKeyPEM, publicKeyPEM });
