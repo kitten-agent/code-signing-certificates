@@ -15,6 +15,10 @@
     "type": "git",
     "url": "https://github.com/expo/code-signing-certificates.git"
   },
+  "files": [
+    "build",
+    "!build/__tests__"
+  ],
   "main": "build/main.js",
   "types": "build/main.d.ts",
   "scripts": {
